@@ -7,9 +7,9 @@ func main() {
 	j := julia.New()
 
 	//o, e := j.Eval("import JSON; JSON.json([1, 2])")
-	o, e := j.Eval("1+1")
+	o, e := j.Eval("using JSON; JSON.json([1,2])")
 	fmt.Println(e)
-	fmt.Println(o)
+	fmt.Println(o.(string))
 
 	defer j.Free()
 }

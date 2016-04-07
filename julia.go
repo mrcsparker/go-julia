@@ -17,6 +17,10 @@ int my_jl_is_array(jl_value_t* t) {
   return jl_is_array(t);
 }
 
+int my_jl_array_len(jl_value_t* t) {
+  return jl_array_len(t);
+}
+
 int my_jl_nfields(jl_value_t* t) {
   return jl_nfields(t);
 }
@@ -63,7 +67,7 @@ import "C"
 import (
 	"errors"
 	"fmt"
-	//"reflect"
+	"reflect"
 	"unsafe"
 )
 
@@ -93,32 +97,44 @@ func (this *Julia) Eval(in string) (res interface{}, err error) {
 		return nil, errors.New(s)
 	}
 
-	//x := C.my_jl_typeof(o)
-	//fmt.Println(C.GoStringN(C.jl_typename_str(x), 10))
+	fmt.Println(reflect.TypeOf(ret))
 
 	if C.my_jl_is_nothing(ret) > C.int(0) {
-		fmt.Println("nothing")
-	} else if C.my_jl_is_tuple(ret) > C.int(0) {
-		fmt.Println("tuple")
-	} else if C.my_jl_is_array(ret) > C.int(0) {
+		return nil, nil
+	}
+
+	if C.my_jl_is_array(ret) > C.int(0) {
 		fmt.Println("array")
-	} else if C.my_jl_is_float64(ret) > C.int(0) {
+		if C.my_jl_array_len(ret) == 0 {
+			return nil, nil
+		}
+	}
+
+	if C.my_jl_is_tuple(ret) > C.int(0) {
+		fmt.Println("tuple")
+	}
+
+	if C.my_jl_is_ascii_string(ret) > C.int(0) {
+		c := C.GoString(C.my_jl_string_data(ret))
+		return c, nil
+	}
+
+	if C.my_jl_is_utf8_string(ret) > C.int(0) {
+		fmt.Println("utf8_string")
+	}
+
+	if C.my_jl_is_float64(ret) > C.int(0) {
 		fmt.Println("float64")
-		return C.jl_unbox_float64(ret), nil
+		return float64(C.jl_unbox_float64(ret)), nil
 	} else if C.my_jl_is_int64(ret) > C.int(0) {
 		fmt.Println("int64")
-		return C.jl_unbox_int64(ret), nil
+		return int64(C.jl_unbox_int64(ret)), nil
 	} else if C.my_jl_is_int32(ret) > C.int(0) {
 		fmt.Println("int32")
 		return C.jl_unbox_int32(ret), nil
 	} else if C.my_jl_is_int8(ret) > C.int(0) {
 		fmt.Println("int8")
 		return C.jl_unbox_int8(ret), nil
-	} else if C.my_jl_is_utf8_string(ret) > C.int(0) {
-		fmt.Println("utf8_string")
-	} else if C.my_jl_is_ascii_string(ret) > C.int(0) {
-		c := C.GoString(C.my_jl_string_data(ret))
-		return c, nil
 	} else if C.my_jl_is_float32(ret) > C.int(0) {
 		fmt.Println("float32")
 	}
